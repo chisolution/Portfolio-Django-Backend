@@ -4,7 +4,7 @@ from typing import Optional, Dict, Any
 from uuid import UUID
 
 from django.db.models import QuerySet, Q
-from auth.models import User
+from authentication.models import User
 
 logger = logging.getLogger(__name__)
 

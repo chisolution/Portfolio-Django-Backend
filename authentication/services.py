@@ -4,8 +4,8 @@ import re
 from typing import Optional, Dict, Any, List
 from uuid import UUID
 
-from auth.models import User
-from auth.repositories import UserRepository
+from authentication.models import User
+from authentication.repositories import UserRepository
 
 logger = logging.getLogger(__name__)
 
