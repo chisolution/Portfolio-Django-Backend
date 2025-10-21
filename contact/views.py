@@ -1,5 +1,5 @@
-"""Contact Views - Function-Based Views for Contact Management"""
 import logging
+from typing import Dict
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -15,6 +15,33 @@ from contact.serializers import (
 
 logger = logging.getLogger(__name__)
 service = ContactService()
+
+
+def standardized_response(
+    message: str,
+    data: dict = None,
+    status_code: int = 200,
+    http_status: int = None
+) -> Response:
+    """Create a standardized API response.
+
+    Args:
+        message: Response message
+        data: Response data
+        status_code: HTTP status code
+        http_status: DRF HTTP status (defaults to status_code)
+
+    Returns:
+        Response object with standardized format
+    """
+    if http_status is None:
+        http_status = status_code
+
+    return Response({
+        "message": message,
+        "data": data or {},
+        "status_code": status_code
+    }, status=http_status)
 
 
 @api_view(['GET', 'POST'])
@@ -34,9 +61,11 @@ def contact_list_create(request: Request) -> Response:
             page = int(page)
             page_size = int(page_size)
         except ValueError:
-            return Response(
-                {"error": "Invalid page or page_size"},
-                status=status.HTTP_400_BAD_REQUEST
+            return standardized_response(
+                message="Invalid pagination parameters",
+                data={"error": "Invalid page or page_size"},
+                status_code=400,
+                http_status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -48,14 +77,25 @@ def contact_list_create(request: Request) -> Response:
                 contacts = [c for c in contacts if c.status == status_filter]
 
             serializer = ContactListSerializer(contacts, many=True)
-            return Response({
-                "count": len(contacts),
-                "page": page,
-                "page_size": page_size,
-                "results": serializer.data
-            }, status=status.HTTP_200_OK)
+            return standardized_response(
+                message="Contacts retrieved successfully",
+                data={
+                    "count": len(contacts),
+                    "page": page,
+                    "page_size": page_size,
+                    "total_pages": paginated_data.get('total_pages', 0),
+                    "results": serializer.data
+                },
+                status_code=200,
+                http_status=status.HTTP_200_OK
+            )
         except ValueError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return standardized_response(
+                message="Error retrieving contacts",
+                data={"error": str(e)},
+                status_code=400,
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
 
     elif request.method == 'POST':
         serializer = ContactCreateSerializer(data=request.data)
@@ -71,16 +111,33 @@ def contact_list_create(request: Request) -> Response:
                     user_agent=user_agent
                 )
                 response_serializer = ContactDetailSerializer(contact)
-                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+                return standardized_response(
+                    message="Contact created successfully",
+                    data=response_serializer.data,
+                    status_code=201,
+                    http_status=status.HTTP_201_CREATED
+                )
             except ValueError as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return standardized_response(
+                    message="Contact creation failed",
+                    data={"error": str(e)},
+                    status_code=400,
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
             except Exception as e:
                 logger.error(f"Error creating contact: {str(e)}")
-                return Response(
-                    {"error": "An error occurred while creating the contact"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                return standardized_response(
+                    message="An error occurred while creating the contact",
+                    data={"error": str(e)},
+                    status_code=500,
+                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return standardized_response(
+            message="Validation failed",
+            data={"errors": serializer.errors},
+            status_code=400,
+            http_status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
@@ -95,27 +152,38 @@ def contact_detail(request: Request, contact_id: str) -> Response:
     try:
         contact_uuid = UUID(contact_id)
     except ValueError:
-        return Response(
-            {"error": "Invalid contact ID format"},
-            status=status.HTTP_400_BAD_REQUEST
+        return standardized_response(
+            message="Invalid contact ID format",
+            data={"error": "Invalid UUID format"},
+            status_code=400,
+            http_status=status.HTTP_400_BAD_REQUEST
         )
 
     if request.method == 'GET':
         contact = service.get_contact(contact_uuid)
         if not contact:
-            return Response(
-                {"error": "Contact not found"},
-                status=status.HTTP_404_NOT_FOUND
+            return standardized_response(
+                message="Contact not found",
+                data={"error": "Contact not found"},
+                status_code=404,
+                http_status=status.HTTP_404_NOT_FOUND
             )
         serializer = ContactDetailSerializer(contact)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return standardized_response(
+            message="Contact retrieved successfully",
+            data=serializer.data,
+            status_code=200,
+            http_status=status.HTTP_200_OK
+        )
 
     elif request.method in ['PUT', 'PATCH']:
         contact = service.get_contact(contact_uuid)
         if not contact:
-            return Response(
-                {"error": "Contact not found"},
-                status=status.HTTP_404_NOT_FOUND
+            return standardized_response(
+                message="Contact not found",
+                data={"error": "Contact not found"},
+                status_code=404,
+                http_status=status.HTTP_404_NOT_FOUND
             )
         serializer = ContactUpdateSerializer(data=request.data, partial=(request.method == 'PATCH'))
         if serializer.is_valid():
@@ -125,21 +193,40 @@ def contact_detail(request: Request, contact_id: str) -> Response:
                     serializer.validated_data['status']
                 )
                 response_serializer = ContactDetailSerializer(updated_contact)
-                return Response(response_serializer.data, status=status.HTTP_200_OK)
+                return standardized_response(
+                    message="Contact updated successfully",
+                    data=response_serializer.data,
+                    status_code=200,
+                    http_status=status.HTTP_200_OK
+                )
             except Exception as e:
                 logger.error(f"Error updating contact: {str(e)}")
-                return Response(
-                    {"error": "An error occurred while updating the contact"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                return standardized_response(
+                    message="An error occurred while updating the contact",
+                    data={"error": str(e)},
+                    status_code=500,
+                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return standardized_response(
+            message="Validation failed",
+            data={"errors": serializer.errors},
+            status_code=400,
+            http_status=status.HTTP_400_BAD_REQUEST
+        )
 
     elif request.method == 'DELETE':
         if service.delete_contact(contact_uuid):
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {"error": "Contact not found"},
-            status=status.HTTP_404_NOT_FOUND
+            return standardized_response(
+                message="Contact deleted successfully",
+                data={},
+                status_code=204,
+                http_status=status.HTTP_204_NO_CONTENT
+            )
+        return standardized_response(
+            message="Contact not found",
+            data={"error": "Contact not found"},
+            status_code=404,
+            http_status=status.HTTP_404_NOT_FOUND
         )
 
 
@@ -154,9 +241,11 @@ def contact_search(request: Request) -> Response:
     status_filter = request.query_params.get('status', '')
 
     if not query:
-        return Response(
-            {"error": "Query parameter is required"},
-            status=status.HTTP_400_BAD_REQUEST
+        return standardized_response(
+            message="Query parameter is required",
+            data={"error": "Query parameter is required"},
+            status_code=400,
+            http_status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
@@ -167,12 +256,22 @@ def contact_search(request: Request) -> Response:
             contacts = [c for c in contacts if c.status == status_filter]
 
         serializer = ContactListSerializer(contacts, many=True)
-        return Response({
-            "count": len(contacts),
-            "results": serializer.data
-        }, status=status.HTTP_200_OK)
+        return standardized_response(
+            message="Contacts searched successfully",
+            data={
+                "count": len(contacts),
+                "results": serializer.data
+            },
+            status_code=200,
+            http_status=status.HTTP_200_OK
+        )
     except ValueError as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return standardized_response(
+            message="Search failed",
+            data={"error": str(e)},
+            status_code=400,
+            http_status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(['GET'])
@@ -183,10 +282,17 @@ def contact_statistics(request: Request) -> Response:
     """
     try:
         stats = service.get_contact_statistics()
-        return Response(stats, status=status.HTTP_200_OK)
+        return standardized_response(
+            message="Contact statistics retrieved successfully",
+            data=stats,
+            status_code=200,
+            http_status=status.HTTP_200_OK
+        )
     except Exception as e:
         logger.error(f"Error getting contact statistics: {str(e)}")
-        return Response(
-            {"error": "An error occurred while getting statistics"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        return standardized_response(
+            message="An error occurred while getting statistics",
+            data={"error": str(e)},
+            status_code=500,
+            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

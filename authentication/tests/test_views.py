@@ -29,7 +29,9 @@ class AuthAPITests(TestCase):
         }
         response = self.client.post('/api/v1/authentication/register/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['username'], 'newuser')
+        self.assertEqual(response.data['data']['username'], 'newuser')
+        self.assertIn('access', response.data['data'])
+        self.assertIn('refresh', response.data['data'])
 
     def test_register_user_password_mismatch(self):
         """Test registration with mismatched passwords"""
@@ -61,7 +63,9 @@ class AuthAPITests(TestCase):
         }
         response = self.client.post('/api/v1/authentication/login/', data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['username'], 'testuser')
+        self.assertEqual(response.data['data']['username'], 'testuser')
+        self.assertIn('access', response.data['data'])
+        self.assertIn('refresh', response.data['data'])
 
     def test_login_wrong_password(self):
         """Test login with wrong password"""
@@ -85,7 +89,7 @@ class AuthAPITests(TestCase):
         """Test getting user details"""
         response = self.client.get(f'/api/v1/authentication/users/{self.user.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['username'], 'testuser')
+        self.assertEqual(response.data['data']['username'], 'testuser')
 
     def test_get_user_detail_not_found(self):
         """Test getting non-existent user"""
@@ -102,20 +106,20 @@ class AuthAPITests(TestCase):
         """Test listing users"""
         response = self.client.get('/api/v1/authentication/users/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['data']['count'], 1)
 
     def test_list_users_pagination(self):
         """Test listing users with pagination"""
         response = self.client.get('/api/v1/authentication/users/?page=1&page_size=10')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('results', response.data)
+        self.assertIn('results', response.data['data'])
 
     def test_update_user_patch(self):
         """Test updating user with PATCH"""
         data = {'first_name': 'Updated'}
         response = self.client.patch(f'/api/v1/authentication/users/{self.user.id}/', data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['first_name'], 'Updated')
+        self.assertEqual(response.data['data']['first_name'], 'Updated')
 
     def test_update_user_put(self):
         """Test updating user with PUT"""
@@ -164,11 +168,11 @@ class AuthAPITests(TestCase):
         self.user.save()
         response = self.client.post(f'/api/v1/authentication/users/{self.user.id}/activate/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data['is_active'])
+        self.assertTrue(response.data['data']['is_active'])
 
     def test_deactivate_user(self):
         """Test deactivating user"""
         response = self.client.post(f'/api/v1/authentication/users/{self.user.id}/deactivate/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data['is_active'])
+        self.assertFalse(response.data['data']['is_active'])
 
