@@ -229,3 +229,45 @@ class ContactRepository:
             'page_size': page_size,
             'total_pages': (total_count + page_size - 1) // page_size
         }
+
+    @staticmethod
+    def get_filtered(
+        page: int = 1,
+        page_size: int = 12,
+        status: Optional[str] = None,
+        preferred_contact_method: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Get filtered and paginated contacts.
+
+        Args:
+            page: Page number (1-indexed)
+            page_size: Number of items per page
+            status: Status to filter by
+            preferred_contact_method: Preferred contact method to filter by
+
+        Returns:
+            Dictionary with filtered and paginated data
+        """
+        queryset = Contact.objects.all()
+
+        # Apply status filter
+        if status:
+            queryset = queryset.filter(status__icontains=status)
+
+        # Apply preferred contact method filter
+        if preferred_contact_method:
+            queryset = queryset.filter(preferred_contact_method__icontains=preferred_contact_method)
+
+        total_count = queryset.count()
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+
+        contacts = queryset.order_by('-created_at')[start_idx:end_idx]
+
+        return {
+            'items': list(contacts),
+            'total': total_count,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': (total_count + page_size - 1) // page_size
+        }

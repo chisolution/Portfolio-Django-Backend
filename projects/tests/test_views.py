@@ -1,5 +1,7 @@
 """Tests for Project Views/APIs"""
 from django.test import TestCase
+from django.db import connection
+from django.test.utils import skipIf
 from rest_framework.test import APIClient
 from rest_framework import status
 from projects.models import Project
@@ -177,4 +179,55 @@ class ProjectAPITests(TestCase):
         response = self.client.get('/api/v1/projects/statistics/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('total', response.data['data'])
+
+    def test_filter_projects_by_category(self):
+        """Test filtering projects by category"""
+        self.project.category = 'Web Development'
+        self.project.is_published = True
+        self.project.save()
+
+        response = self.client.get('/api/v1/projects/?category=Web%20Development')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['data']['count'], 1)
+
+    def test_filter_projects_by_status(self):
+        """Test filtering projects by status"""
+        self.project.status = 'completed'
+        self.project.is_published = True
+        self.project.save()
+
+        response = self.client.get('/api/v1/projects/?status=completed')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['data']['count'], 1)
+
+    @skipIf(connection.vendor == 'sqlite', 'SQLite does not support JSONField contains lookup')
+    def test_filter_projects_by_technology(self):
+        """Test filtering projects by technology"""
+        self.project.technologies = ['Python', 'Django']
+        self.project.is_published = True
+        self.project.save()
+
+        response = self.client.get('/api/v1/projects/?technologies=Python')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['data']['count'], 1)
+
+    @skipIf(connection.vendor == 'sqlite', 'SQLite does not support JSONField contains lookup')
+    def test_filter_projects_by_skills(self):
+        """Test filtering projects by skills"""
+        self.project.skills = ['REST API', 'Database Design']
+        self.project.is_published = True
+        self.project.save()
+
+        response = self.client.get('/api/v1/projects/?skills=REST%20API')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['data']['count'], 1)
+
+    def test_project_statistics_includes_view_count(self):
+        """Test that project statistics includes view_count"""
+        self.project.view_count = 100
+        self.project.save()
+
+        response = self.client.get('/api/v1/projects/statistics/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('total_views', response.data['data'])
 

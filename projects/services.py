@@ -248,10 +248,14 @@ class ProjectService:
         Returns:
             Dictionary with project statistics
         """
+        all_projects = self.repository.get_all()
+        total_views = sum(p.view_count for p in all_projects)
+
         return {
-            'total': len(self.repository.get_all()),
+            'total': len(all_projects),
             'published': self.repository.count_published(),
-            'featured': self.repository.count_featured()
+            'featured': self.repository.count_featured(),
+            'total_views': total_views
         }
 
     def get_paginated_projects(
@@ -276,6 +280,45 @@ class ProjectService:
             raise ValueError("Page size must be between 1 and 100")
 
         return self.repository.get_paginated(page, page_size, published_only)
+
+    def get_filtered_projects(
+        self,
+        page: int = 1,
+        page_size: int = 12,
+        published_only: bool = True,
+        technologies: Optional[List[str]] = None,
+        skills: Optional[List[str]] = None,
+        category: Optional[str] = None,
+        status: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Get filtered and paginated projects.
+
+        Args:
+            page: Page number (1-indexed)
+            page_size: Number of items per page
+            published_only: Whether to return only published projects
+            technologies: List of technologies to filter by
+            skills: List of skills to filter by
+            category: Category to filter by
+            status: Status to filter by
+
+        Returns:
+            Dictionary with filtered and paginated data
+        """
+        if page < 1:
+            raise ValueError("Page number must be >= 1")
+        if page_size < 1 or page_size > 100:
+            raise ValueError("Page size must be between 1 and 100")
+
+        return self.repository.get_filtered(
+            page=page,
+            page_size=page_size,
+            published_only=published_only,
+            technologies=technologies,
+            skills=skills,
+            category=category,
+            status=status
+        )
 
     def get_project_for_display(self, project_id: UUID) -> Optional[Dict[str, Any]]:
         """Get a project formatted for display (published only).

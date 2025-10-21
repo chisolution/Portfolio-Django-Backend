@@ -283,3 +283,33 @@ class ContactService:
         """
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return bool(re.match(pattern, email))
+
+    def get_filtered_contacts(
+        self,
+        page: int = 1,
+        page_size: int = 12,
+        status: Optional[str] = None,
+        preferred_contact_method: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Get filtered and paginated contacts.
+
+        Args:
+            page: Page number (1-indexed)
+            page_size: Number of items per page
+            status: Status to filter by
+            preferred_contact_method: Preferred contact method to filter by
+
+        Returns:
+            Dictionary with filtered and paginated data
+        """
+        if page < 1:
+            raise ValueError("Page number must be >= 1")
+        if page_size < 1 or page_size > 100:
+            raise ValueError("Page size must be between 1 and 100")
+
+        return self.repository.get_filtered(
+            page=page,
+            page_size=page_size,
+            status=status,
+            preferred_contact_method=preferred_contact_method
+        )
