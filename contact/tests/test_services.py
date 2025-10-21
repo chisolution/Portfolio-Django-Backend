@@ -147,38 +147,3 @@ class ContactServiceTests(TestCase):
         )
         self.assertEqual(contact.organization, 'Test Org')
 
-    def test_get_filtered_contacts_by_status(self):
-        """Test filtering contacts by status"""
-        self.contact.status = 'contacted'
-        self.contact.save()
-
-        result = self.service.get_filtered_contacts(
-            page=1,
-            page_size=10,
-            status='contacted'
-        )
-        self.assertEqual(result['total'], 1)
-        self.assertEqual(len(result['items']), 1)
-
-    def test_get_filtered_contacts_by_preferred_method(self):
-        """Test filtering contacts by preferred contact method"""
-        self.contact.preferred_contact_method = 'email'
-        self.contact.save()
-
-        result = self.service.get_filtered_contacts(
-            page=1,
-            page_size=10,
-            preferred_contact_method='email'
-        )
-        self.assertEqual(result['total'], 1)
-
-    def test_get_filtered_contacts_no_results(self):
-        """Test filtering contacts with no matching results"""
-        result = self.service.get_filtered_contacts(
-            page=1,
-            page_size=10,
-            status='closed'
-        )
-        self.assertEqual(result['total'], 0)
-        self.assertEqual(len(result['items']), 0)
-

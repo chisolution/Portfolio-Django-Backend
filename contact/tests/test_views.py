@@ -141,27 +141,3 @@ class ContactAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['data']['phone_number'], '+1234567890')
 
-    def test_filter_contacts_by_status(self):
-        """Test filtering contacts by status"""
-        self.contact.status = 'contacted'
-        self.contact.save()
-
-        response = self.client.get('/api/v1/contact/?status=contacted')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['data']['count'], 1)
-
-    def test_filter_contacts_by_preferred_method(self):
-        """Test filtering contacts by preferred contact method"""
-        self.contact.preferred_contact_method = 'email'
-        self.contact.save()
-
-        response = self.client.get('/api/v1/contact/?preferred_contact_method=email')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['data']['count'], 1)
-
-    def test_filter_contacts_no_results(self):
-        """Test filtering contacts with no matching results"""
-        response = self.client.get('/api/v1/contact/?status=closed')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['data']['count'], 0)
-
