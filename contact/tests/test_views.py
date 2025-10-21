@@ -28,7 +28,7 @@ class ContactAPITests(TestCase):
         }
         response = self.client.post('/api/v1/contact/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['full_name'], 'Jane Doe')
+        self.assertEqual(response.data['data']['full_name'], 'Jane Doe')
 
     def test_create_contact_invalid_email(self):
         """Test contact creation with invalid email"""
@@ -56,25 +56,25 @@ class ContactAPITests(TestCase):
         """Test listing contacts"""
         response = self.client.get('/api/v1/contact/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['data']['count'], 1)
 
     def test_list_contacts_pagination(self):
         """Test listing contacts with pagination"""
         response = self.client.get('/api/v1/contact/?page=1&page_size=10')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('results', response.data)
+        self.assertIn('results', response.data['data'])
 
     def test_list_contacts_filter_by_status(self):
         """Test listing contacts filtered by status"""
         response = self.client.get('/api/v1/contact/?status=new')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['data']['count'], 1)
 
     def test_get_contact_detail(self):
         """Test getting contact details"""
         response = self.client.get(f'/api/v1/contact/{self.contact.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['full_name'], 'John Doe')
+        self.assertEqual(response.data['data']['full_name'], 'John Doe')
 
     def test_get_contact_detail_not_found(self):
         """Test getting non-existent contact"""
@@ -92,7 +92,7 @@ class ContactAPITests(TestCase):
         data = {'status': 'contacted'}
         response = self.client.patch(f'/api/v1/contact/{self.contact.id}/', data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['status'], 'contacted')
+        self.assertEqual(response.data['data']['status'], 'contacted')
 
     def test_update_contact_put(self):
         """Test updating contact with PUT"""
@@ -109,7 +109,7 @@ class ContactAPITests(TestCase):
         """Test searching contacts"""
         response = self.client.get('/api/v1/contact/search/?query=John')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('count', response.data)
+        self.assertIn('count', response.data['data'])
 
     def test_search_contacts_no_query(self):
         """Test searching without query parameter"""
@@ -125,7 +125,7 @@ class ContactAPITests(TestCase):
         """Test getting contact statistics"""
         response = self.client.get('/api/v1/contact/statistics/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('total', response.data)
+        self.assertIn('total', response.data['data'])
 
     def test_create_contact_with_optional_fields(self):
         """Test creating contact with optional fields"""
@@ -139,5 +139,5 @@ class ContactAPITests(TestCase):
         }
         response = self.client.post('/api/v1/contact/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['phone_number'], '+1234567890')
+        self.assertEqual(response.data['data']['phone_number'], '+1234567890')
 
