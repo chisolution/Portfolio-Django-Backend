@@ -185,3 +185,71 @@ class ProjectServiceTests(TestCase):
         self.assertIsNotNone(project)
         self.assertEqual(project.title, 'Updated Title')
 
+    def test_get_filtered_projects_by_category(self):
+        """Test filtering projects by category"""
+        self.project.category = 'Web Development'
+        self.project.is_published = True
+        self.project.save()
+
+        result = self.service.get_filtered_projects(
+            page=1,
+            page_size=10,
+            published_only=True,
+            category='Web Development'
+        )
+        self.assertEqual(result['total'], 1)
+        self.assertEqual(len(result['items']), 1)
+
+    def test_get_filtered_projects_by_status(self):
+        """Test filtering projects by status"""
+        self.project.status = 'completed'
+        self.project.is_published = True
+        self.project.save()
+
+        result = self.service.get_filtered_projects(
+            page=1,
+            page_size=10,
+            published_only=True,
+            status='completed'
+        )
+        self.assertEqual(result['total'], 1)
+
+    @skipIf(connection.vendor == 'sqlite', 'SQLite does not support JSONField contains lookup')
+    def test_get_filtered_projects_by_technology(self):
+        """Test filtering projects by technology"""
+        self.project.technologies = ['Python', 'Django']
+        self.project.is_published = True
+        self.project.save()
+
+        result = self.service.get_filtered_projects(
+            page=1,
+            page_size=10,
+            published_only=True,
+            technologies=['Python']
+        )
+        self.assertEqual(result['total'], 1)
+
+    @skipIf(connection.vendor == 'sqlite', 'SQLite does not support JSONField contains lookup')
+    def test_get_filtered_projects_by_skills(self):
+        """Test filtering projects by skills"""
+        self.project.skills = ['REST API', 'Database Design']
+        self.project.is_published = True
+        self.project.save()
+
+        result = self.service.get_filtered_projects(
+            page=1,
+            page_size=10,
+            published_only=True,
+            skills=['REST API']
+        )
+        self.assertEqual(result['total'], 1)
+
+    def test_get_project_statistics_includes_view_count(self):
+        """Test that project statistics includes view_count"""
+        self.project.view_count = 100
+        self.project.save()
+
+        stats = self.service.get_project_statistics()
+        self.assertIn('total_views', stats)
+        self.assertEqual(stats['total_views'], 100)
+

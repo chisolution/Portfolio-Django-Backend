@@ -50,12 +50,18 @@ def project_list_create(request: Request) -> Response:
 
     GET /api/v1/projects/
     POST /api/v1/projects/
-    Query params (GET): page, page_size, published_only
+    Query params (GET): page, page_size, published_only, technologies, skills, category, status
     """
     if request.method == 'GET':
         page = request.query_params.get('page', 1)
-        page_size = request.query_params.get('page_size', 10)
+        page_size = request.query_params.get('page_size', 12)
         published_only = request.query_params.get('published_only', 'true').lower() == 'true'
+
+        # Get filter parameters
+        technologies = request.query_params.getlist('technologies')
+        skills = request.query_params.getlist('skills')
+        category = request.query_params.get('category')
+        project_status = request.query_params.get('status')
 
         try:
             page = int(page)
@@ -69,7 +75,20 @@ def project_list_create(request: Request) -> Response:
             )
 
         try:
-            paginated_data = service.get_paginated_projects(page, page_size, published_only)
+            # Use filtered method if any filters are provided
+            if technologies or skills or category or project_status:
+                paginated_data = service.get_filtered_projects(
+                    page=page,
+                    page_size=page_size,
+                    published_only=published_only,
+                    technologies=technologies if technologies else None,
+                    skills=skills if skills else None,
+                    category=category,
+                    status=project_status
+                )
+            else:
+                paginated_data = service.get_paginated_projects(page, page_size, published_only)
+
             projects = paginated_data['items']
             serializer = ProjectListSerializer(projects, many=True)
             return standardized_response(

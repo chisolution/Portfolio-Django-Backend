@@ -50,12 +50,13 @@ def contact_list_create(request: Request) -> Response:
 
     GET /api/v1/contact/
     POST /api/v1/contact/
-    Query params (GET): page, page_size, status
+    Query params (GET): page, page_size, status, preferred_contact_method
     """
     if request.method == 'GET':
         page = request.query_params.get('page', 1)
-        page_size = request.query_params.get('page_size', 10)
-        status_filter = request.query_params.get('status', '')
+        page_size = request.query_params.get('page_size', 12)
+        status_filter = request.query_params.get('status')
+        preferred_contact_method = request.query_params.get('preferred_contact_method')
 
         try:
             page = int(page)
@@ -69,13 +70,18 @@ def contact_list_create(request: Request) -> Response:
             )
 
         try:
-            paginated_data = service.get_paginated_contacts(page, page_size)
+            # Use filtered method if any filters are provided
+            if status_filter or preferred_contact_method:
+                paginated_data = service.get_filtered_contacts(
+                    page=page,
+                    page_size=page_size,
+                    status=status_filter,
+                    preferred_contact_method=preferred_contact_method
+                )
+            else:
+                paginated_data = service.get_paginated_contacts(page, page_size)
+
             contacts = paginated_data['items']
-
-            # Filter by status if provided
-            if status_filter:
-                contacts = [c for c in contacts if c.status == status_filter]
-
             serializer = ContactListSerializer(contacts, many=True)
             return standardized_response(
                 message="Contacts retrieved successfully",
