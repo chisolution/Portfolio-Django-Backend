@@ -34,7 +34,7 @@ class ProjectAPITests(TestCase):
         }
         response = self.client.post('/api/v1/projects/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['title'], 'New Project')
+        self.assertEqual(response.data['data']['title'], 'New Project')
 
     def test_create_project_short_title(self):
         """Test project creation with short title"""
@@ -57,19 +57,19 @@ class ProjectAPITests(TestCase):
         self.project.save()
         response = self.client.get('/api/v1/projects/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['data']['count'], 1)
 
     def test_list_projects_pagination(self):
         """Test listing projects with pagination"""
         response = self.client.get('/api/v1/projects/?page=1&page_size=10')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('results', response.data)
+        self.assertIn('results', response.data['data'])
 
     def test_get_project_detail(self):
         """Test getting project details"""
         response = self.client.get(f'/api/v1/projects/{self.project.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['title'], 'Test Project')
+        self.assertEqual(response.data['data']['title'], 'Test Project')
 
     def test_get_project_detail_not_found(self):
         """Test getting non-existent project"""
@@ -86,7 +86,7 @@ class ProjectAPITests(TestCase):
         """Test getting project by slug"""
         response = self.client.get(f'/api/v1/projects/slug/{self.project.project_slug}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['title'], 'Test Project')
+        self.assertEqual(response.data['data']['title'], 'Test Project')
 
     def test_get_published_projects(self):
         """Test getting published projects"""
@@ -94,7 +94,7 @@ class ProjectAPITests(TestCase):
         self.project.save()
         response = self.client.get('/api/v1/projects/published/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['data']['count'], 1)
 
     def test_get_featured_projects(self):
         """Test getting featured projects"""
@@ -103,14 +103,14 @@ class ProjectAPITests(TestCase):
         self.project.save()
         response = self.client.get('/api/v1/projects/featured/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['data']['count'], 1)
 
     def test_update_project_patch(self):
         """Test updating project with PATCH"""
         data = {'title': 'Updated Title'}
         response = self.client.patch(f'/api/v1/projects/{self.project.id}/', data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['title'], 'Updated Title')
+        self.assertEqual(response.data['data']['title'], 'Updated Title')
 
     def test_update_project_put(self):
         """Test updating project with PUT"""
@@ -137,7 +137,7 @@ class ProjectAPITests(TestCase):
         self.project.save()
         response = self.client.get('/api/v1/projects/search/?query=Test')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('count', response.data)
+        self.assertIn('count', response.data['data'])
 
     def test_search_projects_no_query(self):
         """Test searching without query parameter"""
@@ -148,7 +148,7 @@ class ProjectAPITests(TestCase):
         """Test publishing project"""
         response = self.client.post(f'/api/v1/projects/{self.project.id}/publish/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data['is_published'])
+        self.assertTrue(response.data['data']['is_published'])
 
     def test_unpublish_project(self):
         """Test unpublishing project"""
@@ -156,13 +156,13 @@ class ProjectAPITests(TestCase):
         self.project.save()
         response = self.client.post(f'/api/v1/projects/{self.project.id}/unpublish/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data['is_published'])
+        self.assertFalse(response.data['data']['is_published'])
 
     def test_feature_project(self):
         """Test featuring project"""
         response = self.client.post(f'/api/v1/projects/{self.project.id}/feature/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data['is_featured'])
+        self.assertTrue(response.data['data']['is_featured'])
 
     def test_unfeature_project(self):
         """Test unfeaturing project"""
@@ -170,11 +170,11 @@ class ProjectAPITests(TestCase):
         self.project.save()
         response = self.client.post(f'/api/v1/projects/{self.project.id}/unfeature/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data['is_featured'])
+        self.assertFalse(response.data['data']['is_featured'])
 
     def test_project_statistics(self):
         """Test getting project statistics"""
         response = self.client.get('/api/v1/projects/statistics/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('total', response.data)
+        self.assertIn('total', response.data['data'])
 
