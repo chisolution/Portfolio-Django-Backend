@@ -27,7 +27,8 @@ class ContactService:
         preferred_contact_method: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-        organization: Optional[str] = None
+        organization: Optional[str] = None,
+        file_attached: Optional[Any] = None
     ) -> Contact:
         """Create a new contact submission with validation and sanitization.
 
@@ -74,6 +75,7 @@ class ContactService:
             ip_address=ip_address,
             user_agent=user_agent,
             organization=organization,
+            file_attached=file_attached,
             status='new'
         )
 

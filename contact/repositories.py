@@ -23,6 +23,7 @@ class ContactRepository:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
         organization: Optional[str] = None,
+        file_attached: Optional[str] = None,
         status: str = 'new'
     ) -> Contact:
         """Create a new contact submission.
@@ -53,6 +54,7 @@ class ContactRepository:
                 ip_address=ip_address,
                 user_agent=user_agent,
                 organization=organization,
+                file_attached=file_attached,
                 status=status
             )
             logger.info(f"Contact created: {contact.id}")
